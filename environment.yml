@@ -9,4 +9,5 @@ dependencies:
   - numpy
   - seaborn
   - colorlog
+  - neuron
 prefix: C:\Users\Chris\Anaconda3\envs\chloride-dynamics-io-neuron
