@@ -21,22 +21,16 @@ def nrnivmodl(tries_left=2, base_process=None, clean_after=True):
         # reached max tries
         return compiler_output, err
     if base_process is None:
-        if platform.system() == 'Linux' or platform.system() == 'Darwin':
-            base_process = ['nrnivmodl']
-        elif platform.system() == 'Windows':
-            base_process = ["c:\\nrn/mingw/bin/sh", "c:\\nrn/lib/mknrndll.sh", "/c\\nrn"]
-        else:
-            print("unknown system")
-            sys.exit(-1)
+        base_process = ['nrnivmodl']
     try:
         # start compiler process and monitor output
         process = Popen(base_process, stdin=PIPE, stdout=PIPE)
         compiler_output, err = process.communicate()
     except OSError as err:
         print("'{}' failed".format(base_process))
-        alt_path = "/usr/local/nrn/bin/nrnivmodl"
+        alt_path = ["c:\\nrn/mingw/bin/sh", "c:\\nrn/lib/mknrndll.sh", "/c\\nrn"]
         if base_process == alt_path:
-            exit(-1)
+            sys.exit(-1)
         else:
             print("trying {}".format(alt_path))
             return nrnivmodl(tries_left=tries_left - 1, base_process=alt_path)

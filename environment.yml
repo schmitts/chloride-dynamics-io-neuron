@@ -10,4 +10,6 @@ dependencies:
   - seaborn
   - colorlog
   - neuron
+  - gxx_linux-64
+  - h5py
 prefix: C:\Users\Chris\Anaconda3\envs\chloride-dynamics-io-neuron
