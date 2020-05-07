@@ -1,9 +1,13 @@
-# chloride-dynamics-io-neuron
-Code for the paper Chloride dynamics alter the input-output properties of neurons
+# `chloride-dynamics-io-neuron`
+Code for the paper "Chloride dynamics alter the input-output properties of neurons"
 
 Authors: 
 - [Christopher Currin](https://chriscurrin.com)
 
+[![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/ChrisCurrin/chloride-dynamics-io-neuron/master?filepath=chloride-dynamics-io-neuron.ipynb)
+
+
+# To run on your own computer
 ## 1. Create environment from requirements using [conda](https://docs.conda.io/en/latest/)
 
 `conda env create -f environment.yaml`
