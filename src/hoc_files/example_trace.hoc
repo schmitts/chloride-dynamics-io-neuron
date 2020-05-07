@@ -1,0 +1,25 @@
+strdef fileName, saveName
+fileName = "cells/distal_KCC2.hoc"
+saveName = " trace"
+load_file(fileName)
+load_file("run.hoc")
+
+
+objectDef()
+getSteadyState()
+
+exc=150
+inh=200
+
+freq = 5
+
+
+newSynapses(exc,inh)
+
+in(0,1,7)
+ex(0,1,2)
+
+tstop = 1000
+
+load_file("shape_cli.ses")
+

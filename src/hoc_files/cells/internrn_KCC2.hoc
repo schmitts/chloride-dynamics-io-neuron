@@ -1,0 +1,2 @@
+load_file(1,"internrn.hoc")
+load_file(1,"insert_KCC2.hoc")

@@ -37,7 +37,7 @@ MANIFEST
 pip-log.txt
 pip-delete-this-directory.txt
 
-# Unit test / coverage reports
+# Unit protocol / coverage reports
 htmlcov/
 .tox/
 .nox/
@@ -127,3 +127,15 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
+
+# IDE
+# Pycharm/IntelliJ
+.idea/
+!/chloride-dynamics-io-neuron.iml
+
+# Output files
+# markdown files should be used instead of txt files for docs
+*.txt
+*.eps
+*.png
+*.md5

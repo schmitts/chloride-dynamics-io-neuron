@@ -1,0 +1,377 @@
+//---------------------------------------------------------------
+// this file controls the 'run' commands for the simulation
+// the degree of inhibition or excitation, as well as calling
+// usefulFns.hoc to save
+//
+//---------------------------------------------------------------
+load_file("utils/usefulFns.hoc")
+// print "run.hoc loaded"
+proc showGUI(){
+	showV()
+	if(v_graph!=null){
+		v_graph.addexpr("soma.v(.5)", 2, 1, 0.8, 0.85, 2)
+		v_graph.addexpr("axon.v(.5)", 3, 1, 0.8, 0.8, 2)
+		v_graph.addexpr("bdend.v(.5)", 4, 1, 0.8, 0.75, 2)
+		v_graph.addexpr("ldend.v(.5)", 5, 1, 0.8, 0.7, 2)
+		v_graph.addexpr("soma.ecl(.5)", 6, 1, 0.8, 0.65, 2)
+		v_graph.addexpr("axon.ecl(.5)", 7, 1, 0.8, 0.6, 2)
+		v_graph.addexpr("bdend.ecl(.5)", 8, 1, 0.8, 0.55, 2)
+		v_graph.addexpr("ldend.ecl(.5)", 9, 1, 0.8, 0.5, 2)
+	}
+	showRunControl()
+}
+//---------------------------------------------------------------
+// OBJECT DEFINITIONS
+//---------------------------------------------------------------
+objref spikeN, exciteVec, EDend, EDDendRec, trec, vecList
+objref spikeSomaCount, spikeSomaN
+objref somaCliVec, bdendCliVec, ldendCliVec
+objref somaEgabaVec, bdendEgabaVec, ldendEgabaVec
+// repeat run vectors for averaging
+objref spikeN_runs, EDend_runs, spikeSomaN_runs, somaCliVec_runs, bdendCliVec_runs, ldendCliVec_runs, somaEgabaVec_runs, bdendEgabaVec_runs, ldendEgabaVec_runs
+objref burstTimesVec
+// Strings
+strdef name, saveFile, saveWeights, numStr
+objref strobj
+
+// Independent objects
+strobj = new StringFunctions()
+
+proc objectDef(){
+	trec = new Vector()
+	trec.record(&t)
+
+	// already count spikes at axon tip (see methods.hoc)
+	// check spikes at soma too
+	soma spikeSomaCount = new APCount(0.5)
+	spikeSomaCount.thresh=0
+	// keep track of spike times
+	burstTimesVec = new Vector()
+	apc.record(burstTimesVec)	
+	// Dependent objects
+
+	// Distal dendrite local membrane voltage (at excitatory synapse)
+	EDDendRec = new Vector()
+	recordLocation = lexsy[0].get_loc()
+	EDDendRec.record(&ldend.v(recordLocation))
+}
+
+//---------------------------------------------------------------
+//	Get steady state values before proper runs
+//---------------------------------------------------------------
+proc getSteadyState(){
+	print "fileName: ", fileName, " saveName: ", saveName
+	if(strcmp(fileName,"proximal")==0||strcmp(fileName,"distal")==0||strcmp(fileName,"internrn")==0||strcmp(fileName,"somatic")==0){
+		// insert chloride dynamics to find the rest chloride values to better compare simulations with and without chloride
+		load_file(1,"insert_KCC2.hoc")
+		print "chloride dynamics temporarily inserted"
+	}
+	//stable state run
+	in(0)
+	ex(0)
+	useCV()		//ain't nobody got time for that
+	tstop=50000
+	finitialize(v_init)
+	run()
+	disableCV()
+	printf("after %gms (no input)\n\tVrest = %g \n\t[Cl]i (soma (.5)) = %g \n\t[Cl]i (distal dend (.5)) = %g \n",tstop,v,soma.cli(.5),ldend.cli(.5))
+	vtemp = v
+	scliTemp = soma.cli(.5)
+	ldcliTemp = ldend.cli(.5)
+	continuerun(tstop+1)
+	printf("after 1 ms more the change is: \n\tdVrest = %g \n\td[Cl]i (soma (.5)) = %g \n\td[Cl]i (distal dend (.5)) = %g \n",v-vtemp,soma.cli(.5)-scliTemp,ldend.cli(.5)-ldcliTemp)
+	
+	if(strcmp(fileName,"proximal")==0 || strcmp(fileName,"distal")==0||strcmp(fileName,"internrn")==0||strcmp(fileName,"somatic")==0){
+		// remove temporarily inserted chloride dynamics from top of method
+		forall{
+			uninsert KCC2
+			insert cl_ion
+    		ion_style("cl_ion",1,2,1,0,1)
+		}
+		print "temporary chloride dynamics uninserted/removed"
+	}else{
+		forall{
+			cli0_KCC2=cli
+		}
+	}
+	v_init = v
+	forall{
+		cli = scliTemp
+		clo = clo_default
+		cli0_cl_ion = cli
+    	clo0_cl_ion = clo_default
+		hco3o = hco3o_default
+	    hco3i = hco3i_default
+	}
+}
+
+//---------------------------------------------------------------
+// PARAMETERS
+//---------------------------------------------------------------
+proc loadParameters(){
+	print "loadParameters"
+	load_file("config.hoc")
+	save = save_config
+	tstop = tstop_config	// 1 s
+	celsius = celsius_config
+	inhibNoise = inhibNoise_config
+	exciteNoise = exciteNoise_config
+	nRepeats = nRepeats_config
+	// Set up stimulation vectors
+	load_file(1,"protocolStimVectors.hoc")
+	burstingRun = burstingRun_config
+	entireDuration = entireDuration_config
+	burstDuration = burstDuration_config	
+	burstStart = burstStart_config	
+	startOffset = startOffset_config 	
+	if(burstingRun==1 && tstop<entireDuration*1000){
+		tstop = entireDuration*1000
+	}
+
+	stde = stde_config
+	stdi = stdi_config
+	// used in influct and exfluct as second argument	(std deviation)	
+	// remember 98% of distribution is within 2 std deviations
+	// value of 1 is a std deviation of 50%
+	// value of 0.1 is a std deviation of 5%
+
+	// these values get assigned in loop
+	inhibit=0
+	excite=0
+	finitialize(v_init)
+	//useCV()
+
+	// if synapses are persistent, weights don't mean anything,
+	// so must ensure no extra runs are done because of too many
+	// weights in a vector. Need one (arbitrary) value for loops
+	if(persistentSynapses==1||persistentSynapses==2){
+		inhibWeights = new Vector()
+		inhibWeights.append(1)
+	}
+	if(persistentSynapses==1||persistentSynapses==3){
+		exciteWeights = new Vector()
+		exciteWeights.append(1)
+	}
+}
+//---------------------------------------------------------------
+// OPTIONAL CHECKS before run
+//---------------------------------------------------------------
+proc preRunCheck(){
+	print "name \t diam \t L"
+	forall{
+	    printf("%s \t %g \t %g\n",secname(), diam, L)
+	}
+
+	forall{
+	    print psection()
+	}
+	//printP()
+	print "sizes"
+	print "inhibWeights size ", inhibWeights.size()
+	print "exciteWeights size ", exciteWeights.size()
+	print "inhibitStims size ", inhibitStims.size()
+	print "exciteStims size ", exciteStims.size()
+
+	if(index_synced && inhibitStims.size()!=exciteStims.size()){
+		print "error: index_synced is true, but inhibitStims.size()!=exciteStims.size()"
+		quit()
+	}
+
+	print "soma.ecl: ", ecl
+}
+//---------------------------------------------------------------
+// Simulation control
+//---------------------------------------------------------------
+proc runStims(){
+	// O(IW x EW x IS x ES)
+	for inhibWeightIndex=0,inhibWeights.size()-1{
+		inhibWeight = inhibWeights.x(inhibWeightIndex)
+		for exciteWeightIndex=0,exciteWeights.size()-1{
+			exciteWeight = exciteWeights.x(exciteWeightIndex)
+			// Inhibition strength loop
+			for iStimIndex=0, inhibitStims.size()-1{
+				inhibit = inhibitStims.x(iStimIndex)
+				// re-initialise vectors
+				spikeN = new Vector()
+				exciteVec = new Vector()
+				EDend = new Vector()
+				spikeSomaN = new Vector()
+				somaCliVec = new Vector()
+				bdendCliVec = new Vector()
+				ldendCliVec = new Vector()
+				somaEgabaVec = new Vector()
+				bdendEgabaVec = new Vector()
+				ldendEgabaVec = new Vector()
+				vecList = new List()
+				// set inhibition level.  (see in() in methods.hoc)
+				if(persistentSynapses==1||persistentSynapses==2){
+					in(inhibit,inhibit*stdi)
+				}else if(burstingRun){
+					// inhibitStims and burstInhibitStims are index-synced
+						// NORMAL
+						// 1: Hz before and after burst (Hz)
+						// 2: duration of initial stim (s)
+						// 3: start time (ms)
+						// 4: noise
+						// 5: weight/number
+						// BURST
+						// 6: Hz, 7: duration
+						// 8: start -> should be same as duration + start of NORMAL
+						// 9: noise, 10: weight
+						// NORMAL
+						// 1: Hz as before
+						// 11: duration
+						// 7 & 8: start - duration of burst (x1000) + start of burst
+						// 4: noise
+						// 5: weight
+					// burstStart in ms
+					in(inhibit,burstStart/1000,0,inhibNoise,inhibWeight, burstInhibitStims.x[iStimIndex], burstDuration, burstStart, inhibNoise,inhibWeight, entireDuration-burstDuration-burstStart/1000)
+				}else{
+					in(inhibit,inhibNoise,inhibWeight)
+				}
+				printf("\tinhibit: %g  \t->   spikes    EDend \t spikes (soma) \t Soma EGABA \t ldend EGABA \t bdend EGABA\n",inhibit)
+				
+				// Excitation strength loop
+				for eStimIndex=0, exciteStims.size()-1{
+					if(index_synced){
+						// must ensure exciteStims.size()==inhibitStims.size()
+						eStimIndex = iStimIndex
+						printf("synced with inhibition, eStimIndex:%g\n",eStimIndex)
+					}
+					dt=0.025	//reset dt to default to prevent possible unwanted behaviour from CVode if it is enabled
+					excite = exciteStims.x(eStimIndex)
+					// set excitation level (see ex() in methods.hoc)
+					if(persistentSynapses==1||persistentSynapses==3){
+						ex(excite,excite*stde)
+					}else if(burstingRun){
+						ex(excite,burstStart/1000,0,exciteNoise,exciteWeight, burstExciteStims.x[eStimIndex], burstDuration, burstStart, exciteNoise,exciteWeight, entireDuration-burstDuration-burstStart/1000)
+					}else{
+						ex(excite,exciteNoise,exciteWeight)
+					}
+					printf("\t excite: %g\n",excite)
+					exciteVec.append(excite)
+
+					// re-initialise vectors for mean calculation
+					spikeN_runs = new Vector()
+			        EDend_runs = new Vector()
+			        spikeSomaN_runs = new Vector()
+			        somaCliVec_runs = new Vector()
+			        bdendCliVec_runs = new Vector()
+			        ldendCliVec_runs = new Vector()
+			        somaEgabaVec_runs = new Vector()
+			        bdendEgabaVec_runs = new Vector()
+			        ldendEgabaVec_runs = new Vector()
+					//-------------------------------------
+			        for repeat = 1, nRepeats{
+			            run()
+			            //-------------------------------------
+			            spikeN_runs.append(apc.n)
+			            spikeSomaN_runs.append(spikeSomaCount.n)
+			            somaCliVec_runs.append(soma.cli(.5))
+			            bdendCliVec_runs.append(bdend.cli(.5))
+			            ldendCliVec_runs.append(ldend.cli(.5))
+			            somaEgabaVec_runs.append(soma.ecl(.5)*0.8 + 0.2*soma.ehco3(.5))
+			            bdendEgabaVec_runs.append(bdend.ecl(.5)*0.8 + 0.2*bdend.ehco3(.5))
+			            ldendEgabaVec_runs.append(ldend.ecl(.5)*0.8 + 0.2*ldend.ehco3(.5))
+			            if(trec.size()<(tstop-tstop/10)/dt){
+			                tindex=trec.size()-2
+			                tdiff=0
+			                while(tindex>0&&tdiff<100){
+			                    tdiff = trec.x[trec.size()-1] - trec.x[tindex]
+			                    tindex=tindex-1
+			                }
+			                EDend_runs.append(EDDendRec.mean(tindex,trec.size()-1))	//get mean of bdend.v(.2) for 100ms at end of trace
+			            }else{
+			                EDend_runs.append(EDDendRec.mean((tstop/2)/dt,(tstop-tstop/10)/dt))// get mean of bdend.v(.2) from halfway to (just before) end of stim
+			            }
+
+			            printf("\t\t\t\t\t->     %d\t\t %2.2f   \t %g   \t\t  %2.2f  \t\t  %2.2f  \t\t  %2.2f \n",apc.n,EDend_runs.x[EDend_runs.size()-1],spikeSomaCount.n,soma.ecl(.5)*0.8 + 0.2*soma.ehco3(.5),bdend.ecl(.5)*0.8 + 0.2*bdend.ehco3(.5),ldend.ecl(.5)*0.8 + 0.2*ldend.ehco3(.5))
+			        } //end repeat
+			        spikeN.append(spikeN_runs.mean())
+			        EDend.append(EDend_runs.mean())
+			        spikeSomaN.append(spikeSomaN_runs.mean())
+			        somaEgabaVec.append(somaEgabaVec_runs.mean())
+			        bdendEgabaVec.append(bdendEgabaVec_runs.mean())
+			        ldendEgabaVec.append(ldendEgabaVec_runs.mean())
+			        // get latest index
+			        x_index = spikeN.size()-1
+			        printf("\t\tmean: \t\t->     %d\t\t %2.2f   \t %g   \t\t  %2.2f  \t\t  %2.2f  \t\t  %2.2f \n",spikeN.x[x_index],EDend.x[x_index],spikeSomaN.x[x_index],somaEgabaVec.x[x_index],bdendEgabaVec.x[x_index],ldendEgabaVec.x[x_index])
+			        if(index_synced){
+						break
+					}
+				} //end for loop case excite
+				if(save==1){
+					printf("saving...\n")
+					//TODO: what to save for BURSTING?
+					// vectors are saved to a single file
+					vecList.append(exciteVec)
+					vecList.append(spikeN)
+					vecList.append(EDend)
+					vecList.append(spikeSomaN)
+					vecList.append(somaEgabaVec)
+			    	vecList.append(bdendEgabaVec)
+			    	vecList.append(ldendEgabaVec)
+					sprint(numStr,"%g",inhibit)
+					while(strobj.len(numStr)<8){
+						sprint(numStr,"0%s",numStr)
+					}
+					if(persistentSynapses==0){
+						// synaptic input
+						saveInhNoise = inhibNoise
+						saveExcNoise = exciteNoise
+						sprint(saveWeights,"_weights(%g,%g)",exciteWeight,inhibWeight)
+					}else if(persistentSynapses==1){
+						// tonic input
+						saveInhNoise = stdi
+						saveExcNoise = stde
+						sprint(saveWeights,"_weights(-1,-1)")
+					}else if(persistentSynapses==2){
+						// tonic inhibitory input
+						// synaptic excitatory input
+						saveInhNoise = stdi
+						saveExcNoise = exciteNoise
+						sprint(saveWeights,"_weights(%g,-1)",exciteWeight)
+					}else if(persistentSynapses==3){
+						// tonic excitatory input
+						// synaptic inhibitory input
+						saveInhNoise = inhibNoise
+						saveExcNoise = stde
+						sprint(saveWeights,"_weights(-1,%g)",inhibWeight)
+					}
+					sprint(saveFile,"%s_InPt%s_noise(%g,%g)%s.dat",saveName,numStr,saveExcNoise,saveInhNoise,saveWeights)
+					saveVecsToFile(saveFile,"Excitation \t Spikes \t Dendritic Em \t Spikes at Soma \t Soma EGABA \t bdend EGABA \t ldend EGABA",vecList)
+				}
+			} //end for loop case inhibit
+		}
+	}
+	print "done"
+}
+
+proc doRun(){
+	access soma
+	objectDef()
+	if(numarg()==1){
+		print "cli to be set in run.hoc"
+		// set chloride to passed value
+		if(strcmp(fileName,"proximal")==0||strcmp(fileName,"distal")==0||strcmp(fileName,"internrn")==0||strcmp(fileName,"somatic")==0){
+            forall{
+                insert cl_ion
+                ion_style("cl_ion",1,2,1,0,1)
+            }
+            print "cl ion inserted"
+		}
+		forall{
+            cli = $1
+            clo = clo_default
+            cli0_cl_ion = $1
+            clo0_cl_ion = clo_default
+            hco3o = hco3o_default
+            hco3i = hco3i_default
+        }
+	}else{
+		getSteadyState()
+	}
+	loadParameters()
+	preRunCheck()
+	runStims()
+}

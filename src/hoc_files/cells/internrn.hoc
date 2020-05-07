@@ -1,0 +1,7 @@
+load_file(1,"cell.hoc")
+load_file(1,"../synapses/synapses_spread_inhibition.hoc")
+load_file(1,"methods.hoc")
+
+strdef synapseFile
+// for loading later
+synapseFile = "src/hoc_files/synapses/synapses_spread_inhibition.hoc"

@@ -1,0 +1,203 @@
+//------------------------------------------------------------------------------
+//  Config
+//------------------------------------------------------------------------------
+
+//------------------------------------------------------------------------------
+// CELL
+    //--------------------------------------------------------------------------
+    // Passive conductances
+        //----------------------------------------------------------------------
+        // Ratios
+            pK_config = 1
+            pNa_config = 0.23
+            pCl_config = 0.4    
+        //----------------------------------------------------------------------
+        g_pas_k_config  = 0.000125      //for an input resistance of 350
+        g_pas_na_config = g_pas_k_config * pNa_config
+        g_pas_cl_config = g_pas_k_config * pCl_config
+        //pK : pNa : pCl = 1 : 0.05 : 0.45  
+        //http://www.physiologyweb.com/calculators/ghk_equation_calculator.html
+        //http://www.st-andrews.ac.uk/~wjh/neurotut/mempot.html
+
+        //pK : pNa : pCl = 1 : 0.05 : 0.1 
+        //http://nernstgoldman.physiology.arizona.edu/using/
+    //--------------------------------------------------------------------------
+
+
+
+    //--------------------------------------------------------------------------
+    // Ion concentrations
+        ko_config = 4
+        ki_config = 140
+        clo_config = 135
+        cli_config = 4.26   // close to steady-state, but should find closer value before recording
+        hco3i_config = 12
+        hco3o_config = 23
+    //--------------------------------------------------------------------------
+
+    //--------------------------------------------------------------------------
+    // Dimensions
+        soma_L_config = 15
+        soma_diam_config = 15
+        bdend_L_config = 50
+        bdend_diam_config = 2
+        ldend_L_config = 500
+        ldend_diam_config = 0.5
+        axon_L_config = 500
+        axon_diam_config = 0.1
+        Ra_config = 160
+        cm_config = 1
+        nseg_config = 81
+    //--------------------------------------------------------------------------
+
+    celsius_config = 37
+
+    v_init_config = -69
+
+// end cell
+//------------------------------------------------------------------------------
+
+//------------------------------------------------------------------------------
+// METHODS
+    // calls from SYNAPSES
+    //  persist_base_config
+
+//------------------------------------------------------------------------------
+
+//------------------------------------------------------------------------------
+// RUN
+    save_config = 1
+    tstop_config = 1000 // 1 s
+    celsius_config = 37
+    inhibNoise_config =  1
+    exciteNoise_config = 1
+    nRepeats_config = 3
+//------------------------------------------------------------------------------
+
+//------------------------------------------------------------------------------
+// SYNAPSES
+    persistentSynapses_config = 0 // 0 for none, 1 for both, 2 for inh, 3 for exc
+    //--------------------------------------------------------------------------
+    // Number of synapses
+        ninh_persist_config = 100
+        nexc_persist_config = 100
+        ninh_hz_config = 1
+        nexc_hz_config = 1
+        // see *Weight_config for weights
+    //--------------------------------------------------------------------------
+    persist_base_config = 0.0001 // uS
+    stde_config = 0.1
+    stdi_config = 0.1
+//------------------------------------------------------------------------------
+
+//------------------------------------------------------------------------------
+// STIMULATION PROTOCOL
+    //--------------------------------------------------------------------------
+    // Weights of synapses
+        inhibWeight_config = 1
+        exciteWeight_config = 1
+    proc set_optimal_weights(){
+        // assign (proximal) 'optimal' weights based on synapse numbers
+        // 'optimal' weights are derived from the default model
+        // args: 
+        //      $1 - number of inhibitory synapses
+        //      $2 - number of excitatory synapses
+        if ($1==$2){
+            // equal excitatory and inhibitory synapses
+            if ($1==10){
+                // when 10 of both synapses, 'optimal' weights are E:I = 18:6
+                inhibWeight_config = 6
+                exciteWeight_config = 18
+            }else if ($1==50){
+                // when 50 of both synapses, 'optimal' weights are E:I =  5:8
+                inhibWeight_config = 8
+                exciteWeight_config = 5
+            }else{
+                print "going with the default optimal weights..."
+            }
+        }else{
+            // 'normal' weights are E:I = 2:7
+            inhibWeight_config = 1
+            exciteWeight_config = 1
+        }
+        print "inhibWeight_config: ", inhibWeight_config
+        print "exciteWeight_config: ", exciteWeight_config
+    }
+    set_optimal_weights(ninh_hz_config,nexc_hz_config)
+    //--------------------------------------------------------------------------
+    // Stimulation protocols (Vector format)
+        burstingRun_config=0 // this means a burst protocol in run.hoc
+        //----------------------------------------------------------------------
+        // Burst params
+            entireDuration_config = 2   // s
+            burstDuration_config = 1    // s
+            burstStart_config = 500 // ms
+            startOffset_config = 0  // ms
+        //----------------------------------------------------------------------
+
+        load_file("config_stims.hoc")
+        // use preciseConfig()?
+        precise_config = 0
+
+        // are the indices synced up? (for balanced input)
+        // i.e. inhibition stimulation index == excitatory stimulation index
+        //      must ensure exciteStims.size()==inhibitStims.size()
+        index_synced = 0
+        //----------------------------------------------------------------------
+        // Stimulation protocol calls
+            objref singleStimFreq
+            // these methods are called from protocolStimVectors.hoc
+            // and call methods in config_stims.hoc
+            proc preciseConfig(){
+                printf("preciseConfig\n")
+            }
+            proc proximalInhPersistantConfig(){
+                printf("proximalInhPersistantConfig\n")
+                proximalInhPersistant()
+            }
+            proc proximalExcPersistantConfig(){
+                printf("proximalExcPersistantConfig\n")
+                excPersistant()
+            }
+            proc proximalBurstConfig(){
+                printf("nothing happened in ")
+                printf("proximalBurstConfig\n")
+            }
+            proc proximalHzConfig(){
+                printf("proximalHzConfig\n")
+                proximalWeights()
+                fineHzRangeMatched()
+            }
+            proc distalInhPersistantConfig(){
+                printf("distalInhPersistantConfig\n")
+                distalInhPersistant()
+            }
+            proc distalExcPersistantConfig(){
+                printf("distalExcPersistantConfig\n")
+                excPersistant()
+            }
+            proc distalBurstConfig(){
+                printf("nothing happened in ")
+                printf("distalBurstConfig\n")
+            }
+            proc distalHzConfig(){
+                printf("distalHzConfig\n")
+                distalWeights()
+                fineHzRangeMatched()
+            }
+            proc spreadPersistantConfig(){
+                printf("nothing happened in ")
+                printf("spreadPersistantConfig\n")
+            }
+            proc spreadBurstConfig(){
+                printf("nothing happened in ")
+                printf("spreadBurstConfig\n")
+            }
+            proc spreadHzConfig(){
+                printf("nothing happened in ")
+                printf("spreadHzConfig\n")
+            }
+        //----------------------------------------------------------------------
+    //--------------------------------------------------------------------------
+//------------------------------------------------------------------------------
+// printf("config file loaded\n")

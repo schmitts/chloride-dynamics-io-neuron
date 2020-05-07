@@ -1,0 +1,6 @@
+forall {
+    insert KCC2
+    cli0_cl_ion = cli
+    clo0_cl_ion = clo
+    cli0_KCC2 = cli0_cl_ion
+}

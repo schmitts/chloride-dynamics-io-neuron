@@ -1,0 +1,76 @@
+load_file("config.hoc")
+//---------------------------------------------------------------------------
+//									ASSIGN
+//---------------------------------------------------------------------------
+// the logic for mixed synapse types (persistant and synaptic) is:
+//		assign vectors synaptic values of stimulation
+//		reassign appriate vector persistant values of stimulation
+precise=precise_config
+burstingRun = burstingRun_config
+print "fileName: ", fileName
+// useful for testing, or only running specific values
+if(precise){
+	preciseConfig()
+}else if(strcmp(fileName,"proximal")==0||strcmp(fileName,"proximal_KCC2")==0){
+	if(persistentSynapses!=1){
+		if(burstingRun){
+			proximalBurstConfig()
+		}else{
+			proximalHzConfig()
+		}
+	}
+	if(persistentSynapses==1||persistentSynapses==2){
+		proximalInhPersistantConfig()
+	} 
+	if(persistentSynapses==1||persistentSynapses==3){
+		proximalExcPersistantConfig()
+	}
+	
+}else if(strcmp(fileName,"distal")==0||strcmp(fileName,"distal_KCC2")==0){
+	if(persistentSynapses!=1){
+		if(burstingRun){
+			distalBurstConfig()
+		}else{
+			distalHzConfig()
+		}
+	}
+	if(persistentSynapses==1||persistentSynapses==2){
+		distalInhPersistantConfig()
+	} 
+	if(persistentSynapses==1||persistentSynapses==3){
+		distalExcPersistantConfig()
+	}
+}else if(strcmp(fileName,"internrn")==0||strcmp(fileName,"internrn_KCC2")==0){
+	if(persistentSynapses!=1){
+		if(burstingRun){
+			spreadBurstConfig()
+		}else{
+			spreadHzConfig()
+		}
+	}
+	if(persistentSynapses==1||persistentSynapses==2){
+		spreadInhPersistantConfig()
+	} 
+	if(persistentSynapses==1||persistentSynapses==3){
+		spreadExcPersistantConfig()
+	}
+}else if(strcmp(fileName,"somatic")==0||strcmp(fileName,"somatic_KCC2")==0){
+	if(persistentSynapses!=1){
+		if(burstingRun){
+			proximalBurstConfig()
+		}else{
+			proximalHzConfig()
+		}
+	}
+	if(persistentSynapses==1||persistentSynapses==2){
+		proximalInhPersistantConfig()
+	} 
+	if(persistentSynapses==1||persistentSynapses==3){
+		proximalExcPersistantConfig()
+	}	
+}else{
+	printf("protocolStimVectors other condition!\n")
+	stop
+}
+
+// printf("protocolStimVectors file loaded\n")

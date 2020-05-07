@@ -1,0 +1,190 @@
+// Modeling synapses (taus)
+// https://www.researchgate.net/publication/266712567_Modeling_Synapses
+
+// excitatory synapses:
+//		Exp2Syn 
+//				reversal = 0	[mV]
+//				AMPA synapses onto neocortical layer 5 proximal neuron
+//				rise time (AMPA) = 0.2	[ms]
+//				decay time (AMPA) = 1.7	[ms]
+//				NMDA synapses onto CA1 proximal cells
+//				rise time (NMDA) = 2	[ms]
+//				decay time (NMDA) = 89	[ms]
+//				AMPA/NMDA ratio
+// tauRise = 2
+// tauDecay = 89
+// bdend bexsy[i]=new Exp2Syn(i*eDist+eDist/2)
+// bexsy[i].e = 0
+// bexsy[i].tau1 = tauRise
+// bexsy[i].tau2 = tauDecay
+
+// number of synapses
+// for 5 Hz noise bath, with 5 Hz out
+//
+load_file("../config.hoc")
+type=name_declared("persistentSynapses")
+if(type!=5){
+	persistentSynapses = persistentSynapses_config
+}
+persist_base = persist_base_config
+
+type=name_declared("ninh")
+if(type!=5){
+	if(persistentSynapses==1 || persistentSynapses==2){
+		ninh = ninh_persist_config
+	}else{
+		ninh = ninh_hz_config
+	}
+}
+
+type=name_declared("nexc")
+if(type!=5){
+	if(persistentSynapses==1 || persistentSynapses==3){
+		nexc = nexc_persist_config
+	}else{
+		nexc = nexc_hz_config
+	}
+}
+
+type=name_declared("InhDendDistalRatio")
+if(type!=5){
+	InhDendDistalRatio = 0.5
+	// @0: inhibitory synapses all on basal dendrite
+	// @1: inhibitory synapses all on distal dendrite
+}
+type=name_declared("ExcDendDistalRatio")
+if(type!=5){
+	ExcDendDistalRatio = 0.5
+	// @0: excitatory synapses all on basal dendrite
+	// @1: excitatory synapses all on distal dendrite
+}
+printf("InhDendDistalRatio:%g \t ExcDendDistalRatio:%g\n",InhDendDistalRatio,ExcDendDistalRatio)
+
+type=name_declared("inhSoma")
+if(type!=5){
+	inhSoma = 0
+}
+type=name_declared("excSoma")
+if(type!=5){
+	excSoma = 0
+}
+
+objectvar allSynapses, Isyn, Esyn
+allSynapses = new List()
+Isyn = new List()
+Esyn = new List()
+
+ninhL = ninh*InhDendDistalRatio
+ninhB = ninh*(1-InhDendDistalRatio)
+nexcL = nexc*ExcDendDistalRatio
+nexcB = nexc*(1-ExcDendDistalRatio)
+
+
+printf("ninhL:%g \t ninhB:%g \t nexcL:%g \t nexcB:%g \n",ninhL,ninhB,nexcL,nexcB)
+
+
+objref binhsy[1],bexsy[1],linhsy[1],lexsy[1]
+
+access bdend //proximal dendritic inputs
+if(ninhB>0 && inhSoma==0){
+	objref binhsy[ninhB]
+	iDist = 1/ninhB
+	for i=0, ninhB-1 {
+		if(persistentSynapses==1 || persistentSynapses==2){
+			bdend binhsy[i]=new inhfluct(i*iDist+iDist/2)
+			binhsy[i].g_i0=persist_base
+			binhsy[i].std_i=persist_base
+		}else{
+			bdend binhsy[i] = new GABAa(i*iDist+iDist/2)
+		}
+		Isyn.append(binhsy[i])
+		allSynapses.append(binhsy[i])
+	}
+	printf("%g proximal inhibitory synapses of type %s\n",ninhB,binhsy)
+}
+if(nexcB>0 && excSoma==0){
+	objref bexsy[nexcB]
+	eDist = 1/nexcB
+	for i=0, nexcB-1 {
+		if(persistentSynapses==1 || persistentSynapses==3){
+			bdend bexsy[i]=new exfluct(i*eDist+eDist/2)
+			bexsy[i].g_e0=persist_base
+			bexsy[i].std_e=persist_base
+		}else{
+			bdend bexsy[i]=new ProbAMPANMDA3_RATIO(i*eDist+eDist/2)
+		}
+		Esyn.append(bexsy[i])
+		allSynapses.append(bexsy[i])
+	}
+	printf("%g proximal excitatory synapses of type %s\n",nexcB,bexsy)
+}
+access ldend //distal dendritic inputs
+if(ninhL>0 && inhSoma==0){
+	objref linhsy[ninhL]
+	iDist = 1/ninhL
+	for i=0, ninhL-1 {
+		if(persistentSynapses==1 || persistentSynapses==2){
+			ldend linhsy[i]=new inhfluct(i*iDist+iDist/2)
+			linhsy[i].g_i0=persist_base
+			linhsy[i].std_i=persist_base
+		}else{
+			ldend linhsy[i] = new GABAa(i*iDist+iDist/2)
+		}
+		Isyn.append(linhsy[i])
+		allSynapses.append(linhsy[i])
+	}
+	printf("%g distal inhibitory synapses of type %s\n",ninhL,linhsy)
+}
+if(nexcL>0 && excSoma==0){
+	objref lexsy[nexcL]
+	eDist = 1/nexcL
+	for i=0, nexcL-1 {
+		if(persistentSynapses==1 || persistentSynapses==3){
+			ldend lexsy[i]=new exfluct(i*eDist+eDist/2)
+			lexsy[i].g_e0=persist_base
+			lexsy[i].std_e=persist_base
+		}else{
+			ldend lexsy[i]=new ProbAMPANMDA3_RATIO(i*eDist+eDist/2)
+		}
+		Esyn.append(lexsy[i])
+		allSynapses.append(lexsy[i])
+	}
+	printf("%g distal excitatory synapses of type %s\n",nexcL,lexsy)
+}
+access soma
+if(ninhB>0 && inhSoma==1){
+	soma.nseg = nseg_config
+	objref binhsy[ninhB]
+	iDist = 1/ninhB
+	for i=0, ninhB-1 {
+		if(persistentSynapses==1 || persistentSynapses==2){
+			soma binhsy[i]=new inhfluct(i*iDist+iDist/2)
+			binhsy[i].g_i0=persist_base
+			binhsy[i].std_i=persist_base
+		}else{
+			soma binhsy[i] = new GABAa(i*iDist+iDist/2)
+		}
+		Isyn.append(binhsy[i])
+		allSynapses.append(binhsy[i])
+	}
+	printf("%g somatic inhibitory synapses of type %s\n",ninhB,binhsy)
+}
+if(nexcB>0 && excSoma==1){
+	objref bexsy[nexcB]
+	eDist = 1/nexcB
+	for i=0, nexcB-1 {
+		if(persistentSynapses==1 || persistentSynapses==3){
+			soma bexsy[i]=new exfluct(i*eDist+eDist/2)
+			bexsy[i].g_e0=persist_base
+			bexsy[i].std_e=persist_base
+		}else{
+			soma bexsy[i]=new ProbAMPANMDA3_RATIO(i*eDist+eDist/2)
+		}
+		Esyn.append(bexsy[i])
+		allSynapses.append(bexsy[i])
+	}
+	printf("%g somatic excitatory synapses of type %s\n",nexcB,bexsy)
+}
+
+printf("synapses loaded \n")
+

@@ -1,0 +1,3 @@
+InhDendDistalRatio = 0
+ExcDendDistalRatio = 1
+load_file(1,"synapses.hoc")

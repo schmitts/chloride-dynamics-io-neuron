@@ -1,0 +1,12 @@
+name: chloride-dynamics-io-neuron
+channels:
+  - conda-forge
+  - defaults
+dependencies:
+  - python=3.6
+  - jupyter
+  - matplotlib
+  - numpy
+  - seaborn
+  - colorlog
+prefix: C:\Users\Chris\Anaconda3\envs\chloride-dynamics-io-neuron

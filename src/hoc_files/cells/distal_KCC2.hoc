@@ -1,0 +1,2 @@
+load_file(1,"distal.hoc")
+load_file(1,"insert_KCC2.hoc")

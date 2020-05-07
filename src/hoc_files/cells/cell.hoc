@@ -1,0 +1,151 @@
+load_file("nrngui.hoc")
+load_file("../config.hoc")
+create soma
+create bdend
+create ldend
+create axon
+connect bdend(0), soma(1)
+connect ldend(0), bdend(1)
+connect axon(0), soma(0)
+
+// passive ratio
+pK = pK_config
+pNa = pNa_config
+pCl = pCl_config	
+// passive conductances
+g_pas_k_default  = g_pas_k_config
+g_pas_na_default = g_pas_na_config
+g_pas_cl_default = g_pas_cl_config
+
+// Ion concentrations
+ko_default = ko_config
+ki_default = ki_config
+clo_default = clo_config
+cli_default = cli_config
+hco3i_default = hco3i_config
+hco3o_default = hco3o_config
+
+soma {
+	L=soma_L_config 
+	diam=soma_diam_config}
+bdend {
+	L=bdend_L_config 		//alt: 100
+	diam=bdend_diam_config}
+ldend {
+	L=ldend_L_config 		//alt: 200
+	diam=ldend_diam_config}	//alt:   1
+axon {
+	L=axon_L_config 
+	diam=axon_diam_config}
+soma {
+	Ra=Ra_config
+	cm=cm_config
+	nseg=nseg_config
+
+	insert pasghk
+	gclpbar_pasghk=g_pas_cl_default
+	gnapbar_pasghk=g_pas_na_default
+	gkpbar_pasghk=g_pas_k_default
+	ko=ko_default
+	ki=ki_default
+	ki0_k_ion = ki
+	ko0_k_ion = ko
+	clo=clo_default
+	cli=cli_default
+}
+bdend {
+	Ra=Ra_config
+	cm=cm_config
+	nseg=nseg_config
+	insert pasghk
+	gclpbar_pasghk=g_pas_cl_default
+	gnapbar_pasghk=g_pas_na_default
+	gkpbar_pasghk=g_pas_k_default
+	ko=ko_default
+	ki=ki_default
+	ki0_k_ion = ki
+	ko0_k_ion = ko
+	clo=clo_default
+	cli=cli_default
+}
+ldend {
+	Ra=Ra_config
+	cm=cm_config
+	nseg=nseg_config
+	insert pasghk
+	gclpbar_pasghk=g_pas_cl_default
+	gnapbar_pasghk=g_pas_na_default
+	gkpbar_pasghk=g_pas_k_default
+	ko=ko_default
+	ki=ki_default
+	ki0_k_ion = ki
+	ko0_k_ion = ko
+	clo=clo_default
+	cli=cli_default
+}
+axon {
+	Ra=Ra_config
+	cm=cm_config
+	nseg=nseg_config
+	insert na
+	gbar_na=2000
+	insert kv
+	gbar_kv=5
+	insert im
+	gkbar_im=0.00012
+	insert pasghk
+	gclpbar_pasghk=g_pas_cl_default
+	gnapbar_pasghk=g_pas_na_default
+	gkpbar_pasghk=g_pas_k_default
+	ko=ko_default
+	ki=ki_default
+	ki0_k_ion = ki
+	ko0_k_ion = ko
+	clo=clo_default
+	cli=cli_default
+}
+forall {
+    insert hco3_ion
+    ion_style("hco3_ion",1,2,1,0,1)
+    hco3o0_hco3_ion = hco3o_default
+    hco3i0_hco3_ion = hco3i_default
+    hco3o = hco3o_default
+    hco3i = hco3i_default
+}
+
+objectvar somatic, apical, basal, axonal, allsec
+somatic = new SectionList()
+apical = new SectionList()
+basal = new SectionList()
+axonal = new SectionList()
+allsec = new SectionList()
+
+access soma
+somatic.append()
+allsec.append()
+access bdend
+apical.append()
+allsec.append()
+access ldend
+apical.append()
+allsec.append()
+access axon
+axonal.append()
+allsec.append()
+
+access soma
+
+load_file("../utils/usefulFns.hoc")
+geom_nseg()
+if(ldend.nseg<nseg_config){
+	ldend.nseg=nseg_config
+}
+if(bdend.nseg<nseg_config){
+	bdend.nseg=nseg_config
+}
+if(soma.nseg<9){
+	soma.nseg=9
+}
+celsius = celsius_config
+
+v_init = v_init_config
