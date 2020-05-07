@@ -10,19 +10,18 @@ wget http://www.neuron.yale.edu/ftp/neuron/versions/v7.7/nrn-7.7.tar.gz && \
 #  tar -xzf iv-19.tar.gz && \
 #  rm iv-19.tar.gz
 
+echo "compiling NEURON"
+
 cd nrn-7.7
 
-# Compile NEURON.
-  ./configure --prefix=`pwd` --without-iv --with-nrnpython=$HOME/anaconda/bin/python && \
+./configure --prefix=`pwd` --without-iv --with-nrnpython=/srv/conda/envs/notebook/bin/python && \
   make && \
   make install
 
-# Install python interface
+echo "installing NEURON+Python"
 cd src/nrnpython
 
 python setup.py install
 
-PATH=$HOME/neuron/nrn-7.7/x86_64/bin:$PATH
+PATH=$HOME/nrn-7.7/x86_64/bin:$PATH
 
-# Switch back to non-root user privledges
-cd $HOME
