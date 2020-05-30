@@ -142,20 +142,21 @@ def get_inst_firing_rate(spike_arr, time_bin=1., slide=True):
 
 
 def save_to_file(title, result):
+    """Save results to either h5 file (if DataFrame), otherwise to npy file."""
+    from src.utils.file_io import create_dir
+    create_dir("results", timestamp=False)
     path = os.path.join('results', title)
     if type(result) is list:
         np.save(path + '.npy', result)
     elif type(result) is pd.DataFrame:
         result.to_hdf(path, 'table')
+    else:
+        raise RuntimeError(f"saving failed for {result}")
     logger.info("saved")
 
 
 def load_from_file(title):
-    """
-
-    :param title:
-    :return: list() or None
-    """
+    """Load results from a file. Can be DataFrame or numpy arrays."""
     path = os.path.join('results', title)
     try:
         return pd.read_hdf(path, 'table')
