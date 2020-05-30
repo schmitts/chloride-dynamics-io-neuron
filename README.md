@@ -16,11 +16,12 @@ Target Python version: >= 3.6
 
 > development started on Python 2.7, so there may be *some* legacy code. 
 
-## 2. Install [NEURON + Python](https://www.neuron.yale.edu/neuron/)  
+> `environment.yml` includes installation for [NEURON + Python](https://www.neuron.yale.edu/neuron/) via the `neuron` package.  
+> feel free to remove this from `environment.yml` if it may conflict with your local version
 
-## 3. Play around with notebook
+## 2. Play around with notebook
 
-`jupter notebook opdynamics.ipynb`
+`jupter notebook chloride-dynamics-io-neuron.ipynb`
 
 if the python kernel for the created environment (from step 1) is not showing up:
 

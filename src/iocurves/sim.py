@@ -10,12 +10,40 @@ from src.utils.timing import current_time
 logger = logging.getLogger("cl time")
 
 TSTOP = 10000.0  # ms
-SUBSAMPLE = 200
+SUBSAMPLE = 200  # don't load every point into memory
 DT = 0.025*SUBSAMPLE
 
 
-def pyrun(file_name, synapse_type=1, synapse_numbers=(100, 100), syn_input=None, diam=None, pa_kcc2=None, location='axon',
-          trials=1, save=True, tstop=TSTOP, **kwargs):
+def pyrun(file_name, synapse_type=1, synapse_numbers=(100, 100), syn_input=None, diam=None, pa_kcc2=None,
+          location='axon', trials=1, save=True, tstop=TSTOP, **kwargs):
+    """
+    Run a NEURON simulation for a neuron specified in ``file_name`` with input specified by other parameters provided.
+
+    :param file_name: Neuron definition (excluding '.hoc').
+    :type file_name: str
+    :param synapse_type: Type of synapses to use (0 for frequency-based 'f-in', 1 for persistent conductance, 'gclamp').
+    :type synapse_type: int
+    :param synapse_numbers: Number of (E, I) on the neuron.
+    :type synapse_numbers: (int, int)
+    :param syn_input: Mapping of excitatory/inhibitory type to input strength. {'ex', E, 'in: I}
+    :type syn_input: dict[str, int]
+    :param diam: Re-specify diam for specific regions of the neuron. Valid: 'ldend', 'bdend', 'soma', 'axon'.
+    :type diam: dict[str: float]
+    :param pa_kcc2: Strength of KCC2.
+    :type pa_kcc2: float
+    :param location: Location to recording firing rate.
+    :type location: str
+    :param trials: Number of repeated simulations to run.
+    :type trials: int
+    :param save: Whether to load/save the results from/to file.
+    :type save: bool
+    :param tstop: Length of simulation (ms).
+    :type tstop: float
+    :param kwargs: Other keywords are ignored.
+
+    :return: Pair of DataFrame with results and name of save file (even if not saved, the name is generated).
+    :rtype: (pd.DataFrame, str)
+    """
     if syn_input is None:
         syn_input = {'in': 5, 'ex': 5}
     save_name = "{}_{}_{}_{}".format(file_name, synapse_type, synapse_numbers, syn_input)
@@ -118,6 +146,26 @@ GC = 0
 
 
 def do_runs(file_name, plot=[()] or True, syn_input=None, ifr_windowsize=1., **kwargs):
+    """
+    Run a neuron with and without KCC2 as specified in ``file_name`` with synaptic input as in ``syn_input``.
+
+    Specific inputs can be plotted by specifying a list of (E,I) inputs to plot.
+
+
+    :param file_name: Neuron definition (excluding '.hoc').
+    :type file_name: str
+    :param plot: Whether to plot static vs dynamic Cl-.
+        If a list of tuples, will only plot if (syn_input['ex'], syn_input['in']) is present.
+    :type plot: bool or List[Tuple[float, float]]]
+    :param syn_input: Excitatory "ex" and inhibitory "in" input, specified as a mapping.
+        E.g. {'ex': 5, 'in': 5}
+    :type syn_input: dict[str, float]
+    :param ifr_windowsize: Instantaneous firing rate window size. Used for plotting, ignored otherwise.
+    :type ifr_windowsize: float
+    :param kwargs: Other keywords to pass to :meth:`pyrun`.
+    :return:
+    :rtype:
+    """
     global GC
     result, save_name = pyrun(file_name, syn_input=syn_input, **kwargs)
     result_kcc2, save_name_kcc2 = pyrun(file_name + "_KCC2", syn_input=syn_input, **kwargs)
@@ -127,6 +175,7 @@ def do_runs(file_name, plot=[()] or True, syn_input=None, ifr_windowsize=1., **k
     result = result.iloc[::SUBSAMPLE]
     result_kcc2 = result_kcc2.iloc[::SUBSAMPLE]
 
+    # try clear some RAM
     if GC == 10:
         import gc
         gc.collect()

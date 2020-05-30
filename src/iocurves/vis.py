@@ -89,8 +89,8 @@ def plot_compare_dcl(title, results, ifr_windowsize=0.01, combine=False):
     return f, axes
 
 
-def io_curve(io_runs, ifr_windowsize=0.1, combine=False, heatmap=False, fill=False, time_points=None,
-             show_cli=False, save_args=None):
+def plot_io_curve(io_runs, ifr_windowsize=0.1, combine=False, heatmap=False, fill=False, time_points=None,
+                  show_cli=False, save_args=None):
     """
     Plot input-output of a neuron.
 
