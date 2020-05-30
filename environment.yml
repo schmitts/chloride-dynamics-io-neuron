@@ -12,4 +12,5 @@ dependencies:
   - neuron
   - gxx_linux-64
   - h5py
+  - pytables
 prefix: C:\Users\Chris\Anaconda3\envs\chloride-dynamics-io-neuron
