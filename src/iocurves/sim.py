@@ -81,7 +81,7 @@ def pyrun(file_name, synapse_type=1, synapse_numbers=(100, 100), syn_input=None,
     h.newSynapses(synapse_numbers[0], synapse_numbers[1])
     h.inPy(0)
     h.ex(0)
-    vm_init, cli = get_base_vm_cli(file_name, compartment)
+    vm_init, cli = get_base_vm_cli(file_name, compartment=compartment)
     h.v_init = vm_init
     h_str = """
         forall{""" + """
