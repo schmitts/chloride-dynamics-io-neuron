@@ -3,7 +3,6 @@ import logging
 import pandas as pd
 from neuron import h
 from src.iocurves.analysis import load_from_file, save_to_file
-from src.iocurves.vis import plot_compare_dcl
 from src.utils.nrnpy import get_base_vm_cli, load_file
 from src.utils.timing import current_time
 
@@ -56,6 +55,7 @@ def pyrun(file_name, synapse_type=1, synapse_numbers=(100, 100), syn_input=None,
         if loaded is not None:
             return loaded, save_name
 
+    load_file(file_name)
     load_file(file_name)
     if diam is not None:
         for seg in diam.keys():
@@ -170,6 +170,7 @@ def do_runs(file_name, plot=[()] or True, syn_input=None, ifr_windowsize=1., **k
     result, save_name = pyrun(file_name, syn_input=syn_input, **kwargs)
     result_kcc2, save_name_kcc2 = pyrun(file_name + "_KCC2", syn_input=syn_input, **kwargs)
     if plot or (type(plot) is dict and plot.count((syn_input['ex'], syn_input['in'])) > 0):
+        from src.iocurves.vis import plot_compare_dcl
         plot_compare_dcl(save_name, [result, result_kcc2], ifr_windowsize=ifr_windowsize, **kwargs)
 
     result = result.iloc[::SUBSAMPLE]
@@ -184,6 +185,9 @@ def do_runs(file_name, plot=[()] or True, syn_input=None, ifr_windowsize=1., **k
         GC += 1
 
     return result, save_name, result_kcc2, save_name_kcc2
+
+
+is_menu = 0
 
 
 def show_menu():

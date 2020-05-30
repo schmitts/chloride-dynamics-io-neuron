@@ -477,8 +477,9 @@ proc changeSynapseType(){
     persistentSynapses = -1*persistentSynapses
   }
   printf("persistentSynapses changed to %g\n",persistentSynapses)
-
+  printf("loading synapses\n")
   load_file(1,synapseFile)
+  printf("loaded\n")
   inhibitCon()
   exciteCon()
 }

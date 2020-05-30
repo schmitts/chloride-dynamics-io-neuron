@@ -5,7 +5,6 @@ import logging
 import numpy as np
 import pandas as pd
 
-from src.iocurves.sim import DT
 
 logger = logging.getLogger("iocurves analysis")
 
@@ -98,6 +97,7 @@ def moving_average(spike_indices, time_bin=1., backward=True):
     :return: Instantaneous firing rate for each point in time (overlapping windows)
     :rtype: np.ndarray or float
     """
+    from src.iocurves.sim import DT
     time_bin_size = int(time_bin*1000/DT)
     ifr = np.cumsum(spike_indices, dtype=float)
     if backward:
@@ -122,6 +122,8 @@ def get_inst_firing_rate(spike_arr, time_bin=1., slide=True):
     :return:
     :rtype:
     """
+    from src.iocurves.sim import DT
+
     if type(spike_arr) != np.ndarray:
         spike_arr = np.array(spike_arr)
     spike_indices = np.diff(spike_arr) > 0
@@ -158,11 +160,14 @@ def load_from_file(title):
     try:
         return pd.read_hdf(path, 'table')
     except IOError:
-        np.load(path+".npy", allow_pickle=True)
-        return None
+        try:
+            return np.load(path+".npy", allow_pickle=True)
+        except OSError:
+            return None
 
 
 def get_data(cl_state_trials, ifr_windowsize, time_points, var='spikes'):
+    from src.iocurves.sim import DT
     FRdf = pd.DataFrame(index=time_points)
     exc = set()
     inh = set()

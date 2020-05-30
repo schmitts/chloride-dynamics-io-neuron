@@ -5,10 +5,6 @@ import os
 import time
 from matplotlib import pyplot as plt
 
-from src.iocurves.run_range import run_precise
-from src.iocurves.sim import show_menu
-
-from src.iocurves.vis import plot_io_curve, plot_compare_dcl
 
 shared.INIT_NEURON()
 
@@ -31,6 +27,10 @@ def iotime(file_name="distal",
            diam=None,
            trials=5,
            save=True):
+    from src.iocurves.sim import show_menu
+    from src.iocurves.run_range import run_precise
+    from src.iocurves.vis import plot_io_curve, plot_compare_dcl
+
     """Calculate and plot heatmap of input-output curves for persistent synapses on a distal dendrite."""
     if exc_input is None:
         exc_input = list(range(0, 33, 3))
