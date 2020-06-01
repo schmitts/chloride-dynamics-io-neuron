@@ -1,7 +1,8 @@
-# `chloride-dynamics-io-neuron`
-Code for the paper "Chloride dynamics alter the input-output properties of neurons"
+# [Chloride dynamics alter the input-output properties of neurons](https://journals.plos.org/ploscompbiol/article?id=10.1371/journal.pcbi.1007932)
 
-Authors: 
+Currin CB, Trevelyan AJ, Akerman CJ, Raimondo JV (2020) Chloride dynamics alter the input-output properties of neurons. PLOS Computational Biology 16(5): e1007932. https://doi.org/10.1371/journal.pcbi.1007932
+
+Code authors: 
 - [Christopher Currin](https://chriscurrin.com)
 
 [![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/ChrisCurrin/chloride-dynamics-io-neuron/master?filepath=chloride-dynamics-io-neuron.ipynb)
