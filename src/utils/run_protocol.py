@@ -10,6 +10,7 @@ import zipfile
 import logging
 from datetime import datetime
 
+import glob
 from neuron import h
 
 from src.utils.file_io import cd, copy_file, create_dir
@@ -17,7 +18,7 @@ from src.utils.nrnpy import start
 
 logging.basicConfig()
 logger = logging.getLogger("run_protocol")
-
+switched_output = False
 
 def run_protocol(protocol, root=None, run_using_python=True, record_output=True, timestamp=True, **kwargs):
     """
@@ -37,8 +38,10 @@ def run_protocol(protocol, root=None, run_using_python=True, record_output=True,
     print("directory: {} created".format(to_path))
     # Filter files
     included_extenstions = ['hoc', 'mod', 'py', 'm', 'txt', 'dll']
-    file_names = [fn for fn in os.listdir('.')
-                  if any(fn.endswith(ext) for ext in included_extenstions)]
+    src = 'src/' if os.path.exists('src') else ''
+    file_names = []
+    for ext in included_extenstions:
+        file_names += glob.glob(f"{src}hoc_files/**/*.{ext}", recursive=True)
 
     # Copy files
     for file_name in file_names:

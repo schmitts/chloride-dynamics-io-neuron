@@ -79,7 +79,8 @@ def plot_balanced_heatmap(constants, file_name, detail=False):
             if inh not in inh_closest or _dif < inh_closest[inh][0]:
                 inh_closest[inh] = (_dif, exc)
 
-        logger.info("\t".join(list(zip(["offset:", "excitation", "inhibition"], closest))))
+        logger.info("offset, excitation, inhibition)")
+        logger.info(f"{closest}")
 
         for inh, (_dif, exc) in inh_closest.items():
             logger.info("({},{}) = {}".format(exc, inh, _dif))

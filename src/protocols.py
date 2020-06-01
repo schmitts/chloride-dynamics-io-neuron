@@ -8,6 +8,9 @@ This is a holdover from shifting to python from pure hoc scripts.
 """
 
 import numpy as np
+import sys
+import os
+sys.path.append(os.path.join(os.path.dirname(__file__), ".."))
 
 from src.config.shared import INIT_NEURON
 from src.utils.nrnconfig import (config_persistent_synapses, single_hz_and_control, config_synapses, balanced_input,

@@ -53,7 +53,10 @@ def run_NEURON(exc_weight=1, inh_weight=1, timestamp=False, **kwargs):
         h.showV()
         h.showRunControl()
     create_dir(FOLDER_NAME, timestamp=False)
-    h.hoc_stdout(os.path.join(FOLDER_NAME, f"hoc_stdout_{date}.txt"))
+    try:
+        h.hoc_stdout(os.path.join(FOLDER_NAME, f"hoc_stdout_{date}.txt"))
+    except RuntimeError:
+        pass
     files = []
     for synapse_type in ["distal_KCC2", "proximal_KCC2"]:
         if timestamp:

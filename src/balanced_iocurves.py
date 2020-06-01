@@ -19,22 +19,25 @@ logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger("balanced input")
 
 
-def balanced_io_curves():
+def balanced_io_curves(distal=None, prox=None):
     """
     Run and plot balanced input-output curves.
     """
-    prox = [(260, 30),
-            (290, 60),
-            (330, 90),
-            (490, 180),
-            (780, 330),
-            ]
-    distal = [(200, 30),
-              (230, 140),
-              (250, 300),
-              (270, 500),
-              (300, 800),
-              ]
+
+    if distal is None:
+        distal = [(200, 30),
+                  (230, 140),
+                  (250, 300),
+                  (270, 500),
+                  (300, 800),
+                  ]
+    if prox is None:
+        prox = [(260, 30),
+                (290, 60),
+                (330, 90),
+                (490, 180),
+                (780, 330),
+                ]
     data_dirs = protocol_balanced_synaptic_input(distal, prox)
     for directory in data_dirs:
         data_folder = glob.glob(os.path.join(directory, "hoc_output*"))

@@ -5,7 +5,6 @@ import logging
 import numpy as np
 import pandas as pd
 
-
 logger = logging.getLogger("iocurves analysis")
 
 
@@ -51,12 +50,13 @@ def get_params(save_name):
         for i in range(4, len(params) - 2):
             non_default_dict[extra_keys[i - 4]] = params[i]
     # process some of the params
+    syn_input = syn_input.replace('=', "':").replace('(', "{'").replace(")", "}").replace(",",",'")
     synapse_numbers = ast.literal_eval(synapse_numbers)
     syn_input = ast.literal_eval(syn_input)
     for key, value in non_default_dict.items():
         try:
-            non_default_dict[key] = ast.literal_eval(non_default_dict[key])
-        except ValueError:
+            non_default_dict[key] = ast.literal_eval(non_default_dict[key].replace('=', "':").replace('(', "{'").replace(")", "}").replace(",",",'"))
+        except (ValueError, AttributeError):
             # do nothing
             pass
     memoised[save_name] = (file_name, synapse_type, synapse_numbers, syn_input, non_default_dict, location, trials)
@@ -162,7 +162,7 @@ def load_from_file(title):
         return pd.read_hdf(path, 'table')
     except IOError:
         try:
-            return np.load(path+".npy", allow_pickle=True)
+            return np.load(path + ".npy", allow_pickle=True)
         except OSError:
             return None
 

@@ -5,6 +5,7 @@ import os
 import time
 from matplotlib import pyplot as plt
 
+from src.utils.file_io import create_dir
 
 shared.INIT_NEURON()
 
@@ -14,6 +15,7 @@ os.system("taskset -p 0xff %d"%os.getpid())
 fig_time = time.strftime('%Y_%m_%d_%Hh%Mm')
 is_menu = 0
 save_location = "results_plots/"
+create_dir(save_location)
 
 
 # noinspection PyArgumentEqualDefault
@@ -22,8 +24,8 @@ def iotime(file_name="distal",
            time_points=None,
            synapse_type=1,  # 1 for persistent
            synapse_numbers=(100, 100),
-           inh_input=None,
            exc_input=None,
+           inh_input=None,
            diam=None,
            trials=5,
            save=True):

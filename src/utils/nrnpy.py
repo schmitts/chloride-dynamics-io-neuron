@@ -15,7 +15,10 @@ def load_file(filename, set_file_name=True, force_reload=True):
     if filename.endswith(".hoc"):
         filename = filename[0:-4]
     src = 'src/' if os.path.exists('src') else ''
-    file_path = glob.glob(f"{src}hoc_files/**/{filename}.hoc", recursive=True)[0].replace('\\', '/')
+    try:
+        file_path = glob.glob(f"{src}hoc_files/**/{filename}.hoc", recursive=True)[0].replace('\\', '/')
+    except IndexError:
+        file_path = glob.glob(f"../hoc_files/**/{filename}.hoc", recursive=True)[0].replace('\\', '/')
     h.load_file(int(force_reload), file_path)
     if set_file_name:
         h("strdef fileName")

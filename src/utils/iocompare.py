@@ -231,6 +231,7 @@ def compare_synapses(filename, param_list=None, errors=0):
         syn_list = [(120, 10), (140, 50), (180, 130)]
     print("syn_list:{}".format(syn_list))
     load_file(filename)
+    load_file(filename)
     vm, cli = get_base_vm_cli(filename)
     h.v_init = vm
     for i, (exc, inh) in enumerate(syn_list):

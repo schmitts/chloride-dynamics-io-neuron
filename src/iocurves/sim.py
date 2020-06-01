@@ -49,6 +49,7 @@ def pyrun(file_name, synapse_type=1, synapse_numbers=(100, 100), syn_input=None,
     save_name += "_{}".format(diam) if diam is not None else ''
     save_name += "_{}".format(pa_kcc2) if pa_kcc2 is not None else ''
     save_name += "_{}_{}".format(location, trials)
+    save_name = save_name.replace(" ","").replace("'","").replace(":","=").replace("{","(").replace("}",")")
     logger.info(save_name)
     if save:
         loaded = load_from_file(save_name)
