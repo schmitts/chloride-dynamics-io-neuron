@@ -11,7 +11,7 @@ Code authors:
 # To run on your own computer
 ## 1. Create environment from requirements using [conda](https://docs.conda.io/en/latest/)
 
-`conda env create -f environment.yaml`
+`conda env create -f environment.yml`
 
 Target Python version: >= 3.6
 
